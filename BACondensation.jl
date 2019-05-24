@@ -28,6 +28,34 @@ function npe(T::Float64,μ::Float64)
     return ϵn
 end
 
+# 化学势的计算,T为系统的温度，n为粒子数密度
+function mu(T::Float64,N::Int)
+    # 化学势初始值
+    μ=-1.0   
+    # 粒子总和与实际粒子数的差值。
+    Δ=sum(npe(T,μ))-N 
+    # 如果求和结果比实际粒子数大，说明化学势设置偏大，需要调小化学势。
+    dμ=0.1 
+    while Δ>0
+        μ=μ-dμ
+        Δ=sum(npe(T,μ))-N 
+        dμ=2dμ   #如果上一次调整不到位，则dμ翻倍
+    end
+  
+    # 经过上述调整，化学势已经足够小。化学势位于当前值和0之间。所以使用对半查找法即可。    
+    μmin=μ
+    μmax=0
+    dN=0.0001N    
+    while abs(Δ)>dN
+        μ=0.5(μmax+μmin)
+        Δ=sum(npe(T,μ))-N
+        Δ>0 ? μmax=μ : μmin=μ        
+    end
+
+    return μ
+end
+
+#=
 # 粒子数能量密度公式
 nvse(T,μ,ϵ)=2π*sqrt(ϵ)/(exp((ϵ-μ)/T)-1)
 # 临界温度
@@ -37,11 +65,11 @@ Tc(n)=n^(2/3)/((2.612)^(2/3)*π)
 nnz(T,n)=n*(T/Tc(n))^(3/2)
 
 # 求和与连续函数的比较
-#=
+
 using GR
-T=50.0;μ=-0.1;nmax=4;
+T=50.0;μ=-0.1;
 ϵ=0:3*nmax^2;
-ϵn=npe(nmax,T,μ);
+ϵn=npe(T,μ);
 en=nvse.(T,μ,ϵ)
 stem(ϵn)
 hold(true)
