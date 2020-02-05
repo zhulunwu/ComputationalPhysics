@@ -1,6 +1,6 @@
 # 能量单位为h^2/(2mL^2)，化学势和能量单位相同。特征温度Ts=h^2/(2mkL^2),温度单位取Ts
 # 则玻色爱因斯坦统计的能级粒子数表达式为a=1/(exp((ϵ-μ)/T)-1)
-
+using GR
 # 态计算函数
 function states(nx::Int,ny::Int,nz::Int)
     x=(nx==0 ? 1 : 2)
@@ -55,6 +55,13 @@ function mu(T::Float64,N::Int)
     return μ
 end
 
+# 粒子分布图
+N=1000
+T=100.0
+m=mu(T,N)
+dist=npe(T,m)
+stem(dist[1:100])
+
 #=
 # 粒子数能量密度公式
 nvse(T,μ,ϵ)=2π*sqrt(ϵ)/(exp((ϵ-μ)/T)-1)
@@ -65,7 +72,6 @@ Tc(n)=n^(2/3)/((2.612)^(2/3)*π)
 nnz(T,n)=n*(T/Tc(n))^(3/2)
 
 # 求和与连续函数的比较
-
 using GR
 T=50.0;μ=-0.1;
 ϵ=0:3*nmax^2;
