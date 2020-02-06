@@ -2,49 +2,71 @@ using Statistics
 using GR
 
 # 计算翻转前后的能量差异
-function ΔE(σ, i, j, L, H, J)
-    top = i>1 ? i-1 : L
-    bottom = i<L ? i+1 : 1
-    left = j>1 ? j-1 : L
-    right = j<L ? j+1 : 1
-    E_former = -1.0*σ[i,j]*(J*(σ[top,j]+σ[bottom,j]+σ[i,left]+σ[i,right])+H)
-    E_next = σ[i,j]*(J*(σ[top,j]+σ[bottom,j]+σ[i,left]+σ[i,right])+H)
-    delta_E = E_next - E_former
-    return delta_E
+function deltaE(σ, i, j, J, H)
+    L = size(σ)[1]
+    t = i>1 ? i-1 : L
+    b = i<L ? i+1 : 1
+    l = j>1 ? j-1 : L
+    r = j<L ? j+1 : 1
+    ΔE = 2σ[i,j]*(J*(σ[t,j]+σ[b,j]+σ[i,l]+σ[i,r])+H)
+    return ΔE
 end
 
-function simulation(L,K,T,J,H,nstep,relax)
-    σ = rand([1,-1],L,L) 
-    mag=Float64[] #某个温度对应的序列
-    for step=1:(nstep+relax)
-        for i=1:L
-            for j=1:L
-                delta_E = ΔE(σ, i, j, L, H, J)
-                if delta_E <= 0
-                    σ[i,j] = - σ[i,j]
-                elseif exp((- delta_E)/(K * T)) > rand() #如果能量增加，按一定概率取
-                    σ[i,j] = - σ[i,j]
-                end
+function flip(σ,K,T,J,H)
+    L = size(σ)[1]
+    for i=1:L
+        for j=1:L
+            ΔE = deltaE(σ,i,j,J,H)
+            if ΔE <= 0
+                σ[i,j] = - σ[i,j]
+            elseif rand()<exp(-ΔE/(K*T)) #如果能量增加，按一定概率取
+                σ[i,j] = - σ[i,j]
             end
         end
-    
-        M=abs(sum(σ))/(L*L) # 状态平均，正负等效
-        push!(mag,M) #记录
-    end # sweeps 结束
-    result = mean(mag[relax+1:end]) # 统计平均值，去掉relax部分。
-    return result
+    end
 end
 
-sweeps = 1000 
-relax = 1000
-K = 1
-J = 1
-H = 0 # 无外加磁场
-L=40
-
-results = Float64[]
-for T=0.1:0.05:4.0 # 温度扫描
-    result=simulation(L,K,T,J,H,sweeps,relax)
-    push!(results,result)
+function sweep(σ,K,T,J,H,relax,nstep)
+    L = size(σ)[1]
+    for r=1:relax
+        flip(σ,K,T,J,H)
+    end
+    mag=zeros(nstep)
+    for step=1:nstep
+        flip(σ,K,T,J,H)
+        mag[step]=abs(mean(σ)) # 状态平均，正负等效
+    end
+    return mean(mag)
 end
-plot(collect(0.1:0.05:4.0),results)
+
+function update()
+    L = 40
+    K = 1
+    J = 1
+    H = 0 # 无外加磁场
+    T = 3.5
+    σ = rand([1,-1],L,L) 
+    for i=1:100
+        flip(σ,K,T,J,H)
+        heatmap(σ)
+    end
+    println(mean(σ))
+end
+
+function simulation()
+    L = 10
+    K = 1
+    J = 1
+    H = 0 # 无外加磁场
+
+    relax = 100
+    nstep = 1000
+
+    σ = rand([1,-1],L,L) 
+    results = Float64[]
+    for T=0.1:0.05:4.0 # 温度扫描
+        result=sweep(σ,K,T,J,H,relax,nstep)
+        push!(results,result)
+    end
+    plot(collect(0.1:0.05:4.0),results)  
+end
