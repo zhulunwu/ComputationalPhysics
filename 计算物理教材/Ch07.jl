@@ -12,7 +12,7 @@ for j=1:24
 end
 surface(u)
 
-# 绳波方程
+# 绳波模拟
 function rope_wave()
     T=0.8
     ρ=0.2
