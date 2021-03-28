@@ -26,3 +26,24 @@ plot(x,B[:,1],"r:+")
 
 π                   #圆周率
 eps()               #数值最小间隔
+
+#单缝衍射的模拟
+using Makie
+b = 0.1 #缝宽，毫米
+n = 1000 #分成n份
+λ = 5.6e-4
+θm = π/180
+θ=-θm:0.001*θm:θm
+I=zeros(length(θ))
+for i=1:length(I)
+    ϕ = 2π*b*sin(θ[i])/λ
+    dϕ = ϕ/n
+    A=1/(n+1)
+    for j=1:n
+        A += cos(j*dϕ)/n
+    end
+    I[i]=A^2
+end
+lines(θ,I)
+II=repeat(I,1,10)
+heatmap(II,colormap=:greys)
