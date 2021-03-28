@@ -39,10 +39,13 @@ for i=1:length(I)
     ϕ = 2π*b*sin(θ[i])/λ
     dϕ = ϕ/n
     A=1/(n+1)
-    for j=1:n
-        A += cos(j*dϕ)/n
+    abs(ϕ)<eps() ? p=zeros(n+1) : p=0:dϕ:ϕ
+    a2sum=0
+    for j=0.0:0.02π:2π
+        ls=A*cos.(p.+j)
+        a2sum=a2sum+(sum(ls))^2
     end
-    I[i]=A^2
+    I[i]=a2sum/100
 end
 lines(θ,I)
 II=repeat(I,1,10)
